@@ -10,13 +10,13 @@ type queryVar struct {
 	value TypedValue
 }
 
-func (v queryVar) marshalGQL() string {
+func (v queryVar) MarshalGQL() string {
 	return fmt.Sprintf("$%s: %s", v.name, v.value.Type())
 }
 
 type queryVarArr []queryVar
 
-func (vs queryVarArr) marshalGQL() string {
+func (vs queryVarArr) MarshalGQL() string {
 	if len(vs) == 0 {
 		return ""
 	}
@@ -25,7 +25,7 @@ func (vs queryVarArr) marshalGQL() string {
 		if i > 0 {
 			buf.WriteString(", ")
 		}
-		buf.WriteString(v.marshalGQL())
+		buf.WriteString(v.MarshalGQL())
 	}
 	buf.WriteString(")")
 	return buf.String()

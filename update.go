@@ -33,13 +33,13 @@ func (uq UpdateQueryBuilder[M, FN, F]) Where(w *WhereExpr) UpdateQueryBuilder[M,
 	return uq
 }
 
-func (uq *UpdateQueryBuilder[M, FN, F]) marshalGQL() string {
+func (uq *UpdateQueryBuilder[M, FN, F]) MarshalGQL() string {
 	if uq.where == nil {
 		uq.where = &where{Not(&WhereExpr{})}
 	}
 	return fmt.Sprintf(
 		"update_%s",
-		uq.QuerySkeleton.marshalGQL(),
+		uq.QuerySkeleton.MarshalGQL(),
 	)
 }
 
@@ -55,11 +55,11 @@ type UpdateQuery[M Model, FN FieldName[M], F Field[M]] struct {
 	fields []FN
 }
 
-func (uq UpdateQuery[M, FN, F]) marshalGQL() string {
+func (uq UpdateQuery[M, FN, F]) MarshalGQL() string {
 	return fmt.Sprintf(
 		"%s {\nreturning {\n%s\n}\n}",
-		uq.uq.marshalGQL(),
-		FieldNameArr[M, FN](uq.fields).marshalGQL(),
+		uq.uq.MarshalGQL(),
+		FieldNameArr[M, FN](uq.fields).MarshalGQL(),
 	)
 }
 
@@ -67,8 +67,8 @@ func (uq UpdateQuery[M, FN, F]) Query() string {
 	return fmt.Sprintf(
 		"mutation update_%s%s {\n%s\n}",
 		uq.uq.ModelName,
-		uq.uq.queryVars.marshalGQL(),
-		uq.marshalGQL(),
+		uq.uq.queryVars.MarshalGQL(),
+		uq.MarshalGQL(),
 	)
 }
 
@@ -81,7 +81,7 @@ func (uq UpdateQuery[M, FN, F]) Variables() map[string]interface{} {
 }
 
 func (uq UpdateQuery[M, FN, F]) Exec(client *Client) ([]M, error) {
-	respBytes, err := client.do(uq)
+	respBytes, err := client.Do(uq)
 	if err != nil {
 		return nil, err
 	}
@@ -91,7 +91,7 @@ func (uq UpdateQuery[M, FN, F]) Exec(client *Client) ([]M, error) {
 	}
 	type graphqlResponse struct {
 		Data   map[string]mutationReturning `json:"data"`
-		Errors []graphqlError               `json:"errors"`
+		Errors []GraphQLError               `json:"errors"`
 	}
 
 	respObj := graphqlResponse{}

@@ -15,7 +15,7 @@ type queryArgs[M Model, FN FieldName[M], F Field[M]] struct {
 	set        *set[M, F]
 }
 
-func (qa queryArgs[M, FN, F]) marshalGQL() string {
+func (qa queryArgs[M, FN, F]) MarshalGQL() string {
 	var args []string
 	args = appendArg(args, qa.limit)
 	args = appendArg(args, qa.offset)
@@ -31,7 +31,7 @@ func appendArg(arr []string, arg queryArg) []string {
 	if arg == nil || reflect.ValueOf(arg).IsNil() {
 		return arr
 	}
-	s := arg.marshalGQL()
+	s := arg.MarshalGQL()
 	if s == "" {
 		return arr
 	}
@@ -40,7 +40,7 @@ func appendArg(arr []string, arg queryArg) []string {
 
 type queryArg interface {
 	queryArgName() string
-	marshalGQL() string
+	MarshalGQL() string
 }
 
 type limit int
@@ -48,7 +48,7 @@ type limit int
 func (l limit) queryArgName() string {
 	return "limit"
 }
-func (l limit) marshalGQL() string {
+func (l limit) MarshalGQL() string {
 	return fmt.Sprintf("%s: %d", l.queryArgName(), l)
 }
 
@@ -57,7 +57,7 @@ type offset int
 func (o offset) queryArgName() string {
 	return "offset"
 }
-func (o offset) marshalGQL() string {
+func (o offset) MarshalGQL() string {
 	return fmt.Sprintf("%s: %d", o.queryArgName(), o)
 }
 
@@ -68,7 +68,7 @@ type distinctOn[M Model, FN FieldName[M]] struct {
 func (do distinctOn[M, FN]) queryArgName() string {
 	return "distinct_on"
 }
-func (do distinctOn[M, FN]) marshalGQL() string {
+func (do distinctOn[M, FN]) MarshalGQL() string {
 	return fmt.Sprintf("%s: %s", do.queryArgName(), do.field)
 }
 
@@ -79,8 +79,8 @@ type where struct {
 func (w where) queryArgName() string {
 	return "where"
 }
-func (w where) marshalGQL() string {
-	return fmt.Sprintf("%s: %s", w.queryArgName(), w.WhereExpr.marshalGQL())
+func (w where) MarshalGQL() string {
+	return fmt.Sprintf("%s: %s", w.queryArgName(), w.WhereExpr.MarshalGQL())
 }
 
 type set[M Model, F Field[M]] struct {
@@ -90,11 +90,11 @@ type set[M Model, F Field[M]] struct {
 func (s set[M, F]) queryArgName() string {
 	return "_set"
 }
-func (s set[M, F]) marshalGQL() string {
+func (s set[M, F]) MarshalGQL() string {
 	if s.fieldArr == nil || len(s.fieldArr) == 0 {
 		return ""
 	}
-	return fmt.Sprintf("%s: {%s}", s.queryArgName(), s.fieldArr.marshalGQL())
+	return fmt.Sprintf("%s: {%s}", s.queryArgName(), s.fieldArr.MarshalGQL())
 }
 
 type operator string
@@ -165,10 +165,10 @@ type WhereExpr struct {
 
 type whereArr []*WhereExpr
 
-func (wa whereArr) marshalGQL() string {
+func (wa whereArr) MarshalGQL() string {
 	stringArr := make([]string, 0, len(wa))
 	for _, whereExpr := range wa {
-		expr := whereExpr.marshalGQL()
+		expr := whereExpr.MarshalGQL()
 		if expr != "" {
 			stringArr = append(stringArr, expr)
 		}
@@ -176,7 +176,7 @@ func (wa whereArr) marshalGQL() string {
 	return strings.Join(stringArr, ", ")
 }
 
-func (w *WhereExpr) marshalGQL() string {
+func (w *WhereExpr) MarshalGQL() string {
 	if w == nil {
 		return ""
 	}
@@ -185,17 +185,17 @@ func (w *WhereExpr) marshalGQL() string {
 	}
 	var stringArr []string
 
-	andExpr := w.and.marshalGQL()
+	andExpr := w.and.MarshalGQL()
 	if andExpr != "" {
 		stringArr = append(stringArr, fmt.Sprintf("_and: [%s]", andExpr))
 	}
 
-	orExpr := w.or.marshalGQL()
+	orExpr := w.or.MarshalGQL()
 	if orExpr != "" {
 		stringArr = append(stringArr, fmt.Sprintf("_or: [%s]", orExpr))
 	}
 
-	notExpr := w.not.marshalGQL()
+	notExpr := w.not.MarshalGQL()
 	if notExpr != "" {
 		stringArr = append(stringArr, fmt.Sprintf("_not: %s", notExpr))
 	}
@@ -212,7 +212,7 @@ type OrderByExpr struct {
 	field string
 }
 
-func (ob OrderByExpr) marshalGQL() string {
+func (ob OrderByExpr) MarshalGQL() string {
 	return fmt.Sprintf("%s: %s", ob.field, ob.order)
 }
 
@@ -241,13 +241,13 @@ func (oba orderBy) queryArgName() string {
 	return "order_by"
 }
 
-func (oba orderBy) marshalGQL() string {
+func (oba orderBy) MarshalGQL() string {
 	if len(oba) == 0 {
 		return ""
 	}
 	stringArr := make([]string, 0, len(oba))
 	for _, ob := range oba {
-		expr := ob.marshalGQL()
+		expr := ob.MarshalGQL()
 		if expr != "" {
 			stringArr = append(stringArr, expr)
 		}

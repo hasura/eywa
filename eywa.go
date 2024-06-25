@@ -13,7 +13,7 @@ type graphqlRequest struct {
 	Variables map[string]interface{} `json:"variables"`
 }
 
-type graphqlError struct {
+type GraphQLError struct {
 	Message    string                 `json:"message"`
 	Extensions map[string]interface{} `json:"extensions"`
 }
@@ -33,7 +33,7 @@ type FieldName[M Model] interface {
 }
 type FieldNameArr[M Model, FN FieldName[M]] []FN
 
-func (fa FieldNameArr[M, FN]) marshalGQL() string {
+func (fa FieldNameArr[M, FN]) MarshalGQL() string {
 	buf := bytes.NewBufferString("")
 	for i, f := range fa {
 		if i > 0 {
@@ -53,8 +53,8 @@ func (f RawField) GetName() string {
 	return f.Name
 }
 func (f RawField) GetValue() string {
-	if val, ok := f.Value.(gqlMarshaler); ok {
-		return val.marshalGQL()
+	if val, ok := f.Value.(GQLMarshaler); ok {
+		return val.MarshalGQL()
 	}
 	val, _ := json.Marshal(f.Value)
 	vt := reflect.TypeOf(f.Value)
@@ -83,8 +83,8 @@ func (f ModelField[M]) GetValue() string {
 		return fmt.Sprintf("$%s", var_.name)
 	}
 
-	if val, ok := f.Value.(gqlMarshaler); ok {
-		return val.marshalGQL()
+	if val, ok := f.Value.(GQLMarshaler); ok {
+		return val.MarshalGQL()
 	}
 
 	val, _ := json.Marshal(f.Value)
@@ -110,7 +110,7 @@ type Field[M Model] interface {
 
 type fieldArr[M Model, F Field[M]] []F
 
-func (fs fieldArr[M, MF]) marshalGQL() string {
+func (fs fieldArr[M, MF]) MarshalGQL() string {
 	buf := bytes.NewBufferString("")
 	for i, f := range fs {
 		if i > 0 {
@@ -139,8 +139,8 @@ type QuerySkeleton[M Model, FN FieldName[M], F Field[M]] struct {
 	queryArgs[M, FN, F]
 }
 
-func (qs QuerySkeleton[M, FN, F]) marshalGQL() string {
-	return fmt.Sprintf("%s%s", qs.ModelName, qs.queryArgs.marshalGQL())
+func (qs QuerySkeleton[M, FN, F]) MarshalGQL() string {
+	return fmt.Sprintf("%s%s", qs.ModelName, qs.queryArgs.MarshalGQL())
 }
 
 func Get[M Model, MP ModelPtr[M]]() GetQueryBuilder[M, ModelFieldName[M], ModelField[M]] {
@@ -182,8 +182,8 @@ func (sq GetQueryBuilder[M, FN, F]) Where(w *WhereExpr) GetQueryBuilder[M, FN, F
 	return sq
 }
 
-func (sq GetQueryBuilder[M, FN, F]) marshalGQL() string {
-	return sq.QuerySkeleton.marshalGQL()
+func (sq GetQueryBuilder[M, FN, F]) MarshalGQL() string {
+	return sq.QuerySkeleton.MarshalGQL()
 }
 
 func (sq GetQueryBuilder[M, FN, F]) Select(field FN, fields ...FN) GetQuery[M, FN, F] {
@@ -198,11 +198,11 @@ type GetQuery[M Model, FN FieldName[M], F Field[M]] struct {
 	fields []FN
 }
 
-func (sq GetQuery[M, FN, F]) marshalGQL() string {
+func (sq GetQuery[M, FN, F]) MarshalGQL() string {
 	return fmt.Sprintf(
 		"%s {\n%s\n}",
-		sq.sq.marshalGQL(),
-		FieldNameArr[M, FN](sq.fields).marshalGQL(),
+		sq.sq.MarshalGQL(),
+		FieldNameArr[M, FN](sq.fields).MarshalGQL(),
 	)
 }
 
@@ -210,7 +210,7 @@ func (sq GetQuery[M, FN, F]) Query() string {
 	return fmt.Sprintf(
 		"query get_%s {\n%s\n}",
 		sq.sq.ModelName,
-		sq.marshalGQL(),
+		sq.MarshalGQL(),
 	)
 }
 
@@ -219,14 +219,14 @@ func (sq GetQuery[M, FN, F]) Variables() map[string]interface{} {
 }
 
 func (sq GetQuery[M, FN, F]) Exec(client *Client) ([]M, error) {
-	respBytes, err := client.do(sq)
+	respBytes, err := client.Do(sq)
 	if err != nil {
 		return nil, err
 	}
 
 	type graphqlResponse struct {
 		Data   map[string][]M `json:"data"`
-		Errors []graphqlError `json:"errors"`
+		Errors []GraphQLError `json:"errors"`
 	}
 
 	respObj := graphqlResponse{}
